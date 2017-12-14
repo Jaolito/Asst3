@@ -17,3 +17,7 @@ sfs_init()
     logfile = 01e87030
     diskfile = /tmp/apm145/testfsfile
     umask = 00000
+
+sfs_getattr(path="/", statbuf=0x399bac10)
+
+sfs_destroy(userdata=0x01e87010)

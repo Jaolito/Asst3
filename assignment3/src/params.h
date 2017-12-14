@@ -20,13 +20,64 @@
 // setlinebuf() later in consequence.
 #define _XOPEN_SOURCE 500
 
+
 // maintain bbfs state in here
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <sys/stat.h>
 struct sfs_state {
     FILE *logfile;
     char *diskfile;
+    struct i_node * current_node;
+    struct r_node * root;
 };
 #define SFS_DATA ((struct sfs_state *) fuse_get_context()->private_data)
 
+
+
+struct i_node {
+	int data_block;
+	int i_node_num;
+	char name [100];
+	char type;
+	char is_open;
+	int file_size;
+	mode_t mode;
+	int first_child;
+	int last_child;
+	int big_brother;
+	int parent;
+	int sibling;
+	int child;
+	/*
+ 	*
+ 	*	Could potentially need to include time
+ 	*
+ 	*/
+	
+} i_node;
+
+//Bookeeping node to track state of file system
+struct r_node {
+	char free_blocks [500];	
+	int confirmation_number;
+ } r_node;
+
+
+
+struct file_descriptor {
+	uint32_t i_node_id;
+	unsigned int index;
+	unsigned int tags;
+	unsigned int open;
+} file_descriptor;
+
+
+
+
+
 #endif
+
+
+
