@@ -28,7 +28,7 @@ struct r_node {
 
 We have designed our system to use 500 blocks, each of 512 bytes.  Each iNode is directly mapped to blocks in the diskfile based on whether it is an iNode for a file or directory.  If the iNode is for a file, it will point to blocks on the disk designated for files. A directory iNode, however, will point to both file blocks and other directories (other iNodes).  This essentially means that we can have at most 500 iNodes.
 
-Inside the iNode you will find the data block it points to, an iNode id, name, type (Directory or File), a boolean is_open, file size and access mode (Read, Write). In addition to these, we also keep track of the relationships between iNodes.
+Inside the iNode you will find the data block it points to, an iNode id, name, type (Directory or File), a boolean is_open, file size and access mode (Read, Write), and a timestamp for when the node was last accessed, modified and changed. In addition to these, we also keep track of the relationships between iNodes.
 
 ```c
 struct i_node {
@@ -39,7 +39,9 @@ struct i_node {
     char is_open;
     int file_size;
     mode_t mode;
+    uint32_t ino;
     int first_child;
+    time_t access, modify, change;
     int last_child;
     int big_brother;
     int parent;
@@ -51,3 +53,12 @@ struct i_node {
 We store these relationships in the variables  first child, last child, big brother, parent, sibling and child. These variables are all of type int and reference another iNodes id.  These relationships come in handy for when we create, read and delete directories and files because a file system is a hierarchy of data.  In order to keep it organized, we must know the relationships between all iNodes.
 
 Since our system uses 500 blocks and each block is 512 bytes, 500 * 512 = 256,000 bytes = 256 kb. This is the maximum storage capacity of our file system.
+
+## Helper Functions
+
+### int find_free_i_node(char type)
+This function finds open blocks within the system to use for the creation of a new directory or datafile.
+
+### int find_i_node(struct i_node * curr ,char * path, char type)
+This function finds the block number of the given path or the parent on a create or mkdir call.
+
