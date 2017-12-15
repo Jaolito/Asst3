@@ -44,6 +44,7 @@ struct i_node {
 	char is_open;
 	int file_size;
 	mode_t mode;
+	uint32_t ino;
 	int first_child;
 	int last_child;
 	int big_brother;
@@ -62,6 +63,7 @@ struct i_node {
 struct r_node {
 	char free_blocks [500];	
 	int confirmation_number;
+	uint32_t counter;
  } r_node;
 
 

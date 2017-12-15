@@ -2,7 +2,7 @@
 
 make clean
 make
-fusermount -u /tmp/apm145/mountdir/
+fusermount -uz /tmp/apm145/mountdir/
 rm -rf /tmp/apm145/mountdir
 rm /tmp/apm145/drivefile
 mkdir /tmp/apm145/mountdir

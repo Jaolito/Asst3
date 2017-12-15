@@ -53,6 +53,7 @@ int find_free_i_node(char type){
 		for(i=2; i<500; i++){
 			if(root-> free_blocks[i] == 0){
 				root-> free_blocks[i] = 1;
+				block_write(0, root);
 				return i;
 			}
 		}
@@ -68,7 +69,9 @@ int find_free_i_node(char type){
 			i++;
 		}
 		if (i<500){
+			i--;
 			root-> free_blocks[i] = 1;
+			block_write(0, root);
 			return i;
 		}else{
 			return -1;
@@ -81,14 +84,15 @@ int find_i_node(struct i_node * curr ,char * path, char type){
 	
 
 	
-	log_msg("\nPath: %s  %d %d\n", path, strlen(path), count++);
 	if(path[strlen(path)-1] == '/' && strlen(path) != 1){
 		path[strlen(path)-1] = '\0';
 	}
 	if(path[0] != '/'){
+		errno = ENOENT;
 		return -1;	
 	}
 	if(strlen(path) == 1){
+		errno = ENOENT;
 		return 1;
 	}
 	
@@ -114,6 +118,7 @@ int find_i_node(struct i_node * curr ,char * path, char type){
 						return curr-> i_node_num;
 					}	
 					//Incorrect path
+		errno = ENOENT;
 					return -1;
 				}
 			}
@@ -122,12 +127,14 @@ int find_i_node(struct i_node * curr ,char * path, char type){
 		if (type == 0 && str == NULL && curr->type != 0){
 			return curr-> i_node_num;
 		}
+		errno = ENOENT;
 			return -1;
 	}
 	if(str == NULL){
 		//find child that maches temp;
-		free(buf);
+		//free(buf);
 		if (type == 0){
+		errno = ENOENT;
 			return -1;
 		}
 		return block_num;
@@ -201,13 +208,14 @@ void *sfs_init(struct fuse_conn_info *conn)
 		i_root-> type = 1;
 		i_root-> mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO;
 		i_root-> file_size = sizeof(struct i_node);
-		root->free_blocks[1] = 1;
+		root-> free_blocks[1] = 1;
+		root-> counter = 0;
 		block_write(1,i_root); 
 	}
 	
+	block_write(0, root);		
 	log_conn(conn);
 	log_fuse_context(fuse_get_context());
-	block_write(0, root);		
 		
 	
 
@@ -242,17 +250,19 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 	char * new_path = (char *)malloc(sizeof(strlen(path)+1));	
 	strcpy(new_path, path);	
 	//Get i_node from path
-	struct i_node * attr_buf = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * root_node = (struct i_node *)malloc(sizeof(struct i_node));
+	struct i_node * attr_buf = (struct i_node *)malloc(512);
+	struct i_node * root_node = (struct i_node *)malloc(512);
 	block_read(1,root_node);
-	int block_num = find_i_node(root_node, new_path, 0);
-	fprintf(stderr, "Before log message fo block num:");
-	log_msg("\nBlock num: %d\n", block_num);
+	unsigned int block_num = find_i_node(root_node, new_path, 1);
 	if(block_num != -1){
-	log_msg("After the Frees");
+	log_msg("\n Block num: %d\n", block_num);
 		block_read(block_num, attr_buf);
 		statbuf->st_size = attr_buf->file_size;	
-		statbuf->st_mode = attr_buf->mode;
+		if (attr_buf-> type == 1){
+			statbuf->st_mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO;
+		}else{
+			statbuf->st_mode = S_IFREG | S_IRWXU | S_IRWXG | S_IRWXO;
+		}
 		statbuf->st_ino = block_num;
 		statbuf->st_nlink = 1;
 		statbuf->st_gid = 0;
@@ -260,13 +270,12 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 		statbuf->st_blocks = 1;
 		
 	}else{
-	log_msg("After the Frees");
-		return -1;
+		return -errno;
 	}
 	
-	free(new_path);
-	free(attr_buf);
-	free(root_node);
+	//free(new_path);
+	//free(attr_buf);
+	//free(root_node);
 
     	return retstat;
 }
@@ -288,12 +297,22 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     	int retstat = 0;
     	log_msg("\nsfs_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n", path, mode, fi);
     
-    	char * new_path = (char *)malloc(sizeof(strlen(path)+1));
-    	struct i_node * root_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * dir_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * child_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * new_node = (struct i_node *)malloc(sizeof(struct i_node));
+   	char * new_path = (char *)malloc(sizeof(strlen(path)+1));
+    	struct i_node * root_node = (struct i_node *)malloc(512);
+	struct i_node * dir_node = (struct i_node *)malloc(512);
+	struct i_node * child_node = (struct i_node *)malloc(512);
+	struct i_node * new_node = (struct i_node *)malloc(512);
+	struct r_node * root = (struct r_node *)malloc(512);
 
+	block_read(0, root);
+
+	char * name;
+	strcpy(new_path, path);
+	name = strrchr(new_path, '/');
+	name++;
+	if (name[strlen(name) -1] == '/'){
+		name[strlen(name) -1] = '\0';	
+	}
 
 
 	block_read(1, root_node);
@@ -305,11 +324,11 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 		open_index1 = find_free_i_node(1);
 		if (open_index1 == -1){
 			//There are not two open i_node blocks
-			free(root_node);
-			free(dir_node);
-			free(new_path);
-			free(child_node);
-			free(new_node);
+	//		free(root_node);
+	//		free(dir_node);
+	//		free(new_path);
+	//		free(child_node);
+	//		free(new_node);
 			return -1;
 		}else{
 			open_index2 = find_free_i_node(0);
@@ -319,13 +338,16 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 			block_read(dir_node-> last_child, child_node);
 			child_node-> sibling = open_index1;
 			new_node-> big_brother = child_node->i_node_num; 
-			block_write(dir_node->last_child, child_node);
+			dir_node-> last_child = open_index1;
+			block_write(child_node-> i_node_num, child_node);
 		}else{
 			dir_node-> first_child = open_index1;
 			dir_node-> last_child = open_index1;
 			new_node-> big_brother = -1;
 		}
 
+		root-> counter++;
+		new_node-> ino = root-> counter;
 		new_node-> parent = dir_node->i_node_num;
 		new_node-> data_block = open_index2;
 		new_node-> i_node_num = open_index1;
@@ -335,30 +357,31 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 		new_node-> last_child = -1;
 		new_node-> type = 0;
 		new_node-> is_open = 0;
-		new_node-> mode = S_IFREG | mode;
+		new_node-> mode = S_IFREG | S_IRWXU | S_IRWXG | S_IRWXO;
+		strcpy(new_node-> name, name);
 		//fi-> fh = open_index1;
 
 		block_write(dir_block_num, dir_node);
 		block_write(open_index1, new_node);
 
 	}else{
-		free(root_node);
-		free(dir_node);
-		free(child_node);
-		free(new_node);
-		free(new_path);
+	//	free(root_node);
+	//	free(dir_node);
+	//	free(child_node);
+	//	free(new_node);
+	//	free(new_path);
 		return -1;
 	}
 		
 	
 	
     
-	free(root_node);
-	free(new_path);
-	free(dir_node);
-	free(child_node);
-	free(new_node);
-	sfs_open(path,fi);
+	//free(root_node);
+	//free(new_path);
+	//free(dir_node);
+	//free(child_node);
+	//free(new_node);
+	sfs_open(path,fi);    
     	return retstat;
 }
 
@@ -367,17 +390,18 @@ int sfs_unlink(const char *path){
 
 	int retstat = 0;
 	log_msg("sfs_unlink(path=\"%s\")\n", path);
-	struct i_node * rem_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * root_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * parent_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * bb_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * lb_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct r_node * root = (struct r_node *)malloc(sizeof(struct r_node));
+	struct i_node * rem_node = (struct i_node *)malloc(512);
+	struct i_node * root_node = (struct i_node *)malloc(512);
+	struct i_node * parent_node = (struct i_node *)malloc(512);
+	struct i_node * bb_node = (struct i_node *)malloc(512);
+	struct i_node * lb_node = (struct i_node *)malloc(512);
+	struct r_node * root = (struct r_node *)malloc(512);
 	char * new_path = (char *)malloc(strlen(path)+1);
 	strcpy(new_path, path);	
 
+	block_read(1, root_node);
 	int i_node_index = find_i_node(root_node, new_path,1);
-	block_read(0, root_node);
+	block_read(0, root);
 	block_read(i_node_index, rem_node);
 	block_read(rem_node->parent, parent_node);	
 	int data_index = rem_node-> data_block;
@@ -418,13 +442,13 @@ int sfs_unlink(const char *path){
 
 	block_write(i_node_index, rem_node);
 	block_write(0, root);
-	free(rem_node);
-	free(bb_node);
-	free(lb_node);
-	free(root);
-	free(parent_node);
-	free(root_node);
-	free(new_path);
+	//free(rem_node);
+	//free(bb_node);
+	//free(lb_node);
+	//free(root);
+	//free(parent_node);
+	//free(root_node);
+	//free(new_path);
 
 
 	return retstat;
@@ -444,23 +468,26 @@ int sfs_open(const char *path, struct fuse_file_info *fi){
 	int retstat = 0;
     	log_msg("\nsfs_open(path\"%s\", fi=0x%08x)\n", path, fi);
 
-	struct i_node * open_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * root_node = (struct i_node *)malloc(sizeof(struct i_node));
+	struct i_node * open_node = (struct i_node *)malloc(512);
+	struct i_node * root_node = (struct i_node *)malloc(512);
 	char * new_path = (char *)malloc(strlen(path)+1);
 	strcpy(new_path, path);
 	block_read(1,root_node);
-	int index = find_i_node(root_node, new_path, 1);
+	const int index = find_i_node(root_node, new_path, 1);
 	if (index != -1){
 		block_read(index, open_node);
 	}else{
-		return -1;
+		//sfs_create(path,O_CREAT,fi);
+		return -errno;
 	}
+
 	
 	open_node-> is_open = 1;
 	block_write(index,open_node);
-    	free(open_node);
-	free(root_node);
-	free(new_path);
+    	//free(open_node);
+	//free(root_node);
+	//free(new_path);
+	log_msg("\nindex %d\n", index);
     	return retstat;
 }
 
@@ -487,17 +514,17 @@ int sfs_release(const char *path, struct fuse_file_info *fi){
 	char * new_path = (char *)malloc(strlen(path)+1);
 	strcpy(new_path, path);
 	block_read(1,root_node);
-	int index = find_i_node(root_node, new_path, 1);
+	const int index = find_i_node(root_node, new_path, 1);
 	if (index != -1){
 		block_read(index, open_node);
 	}else{
-		return -1;
+		return -errno;
 	}
 	open_node-> is_open = 0;
 	block_write(index,open_node);
-    	free(open_node);
-	free(root_node);
-	free(new_path);
+    	//free(open_node);
+	//free(root_node);
+	//free(new_path);
 
     	return retstat;
 }
@@ -519,8 +546,8 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
     	log_msg("\nsfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n", path, buf, size, offset, fi);
 
     
-	struct i_node * open_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * root_node = (struct i_node *)malloc(sizeof(struct i_node));
+	struct i_node * open_node = (struct i_node *)malloc(512);
+	struct i_node * root_node = (struct i_node *)malloc(512);
 	char * new_path = (char *)malloc(strlen(path)+1);
 	char new_buf [512];
 	strcpy(new_path, path);
@@ -570,8 +597,8 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset, stru
     	log_msg("\nsfs_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n", path, buf, size, offset, fi);
     
 	
-	struct i_node * open_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * root_node = (struct i_node *)malloc(sizeof(struct i_node));
+	struct i_node * open_node = (struct i_node *)malloc(512);
+	struct i_node * root_node = (struct i_node *)malloc(512);
 	char * new_path = (char *)malloc(strlen(path)+1);
 	char new_buf [512];
 	strcpy(new_path, path);
@@ -676,17 +703,18 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
     	int retstat = 0;
 	
     
-    log_msg("sfs_rmdir(path=\"%s\")\n",
+    log_msg("sfs_readdir(path=\"%s\")\n",
 	    path);
 	    //Do we need to return the full path?
     	char * new_path = (char *)malloc(sizeof(strlen(path)));
-	struct i_node * root_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * read_node = (struct i_node *)malloc(sizeof(struct i_node));
-	struct i_node * child_node = (struct i_node *)malloc(sizeof(struct i_node));
+	struct i_node * root_node = (struct i_node *)malloc(512);
+	struct i_node * read_node = (struct i_node *)malloc(512);
+	struct i_node * child_node = (struct i_node *)malloc(512);
+	struct stat * stat_buf;
 	block_read(1, root_node);
+	strcpy(new_path, path);
+
 	int block_num = find_i_node(root_node, new_path, 1);
-    log_msg("sfs_rmdir(path=\"%d\")\n",
-	    block_num);
 	block_read(block_num, read_node);
 	
 	int child_block = read_node-> first_child;
@@ -695,10 +723,14 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 	}else{
 		block_read(child_block, child_node);
 		while(1){
-			if(filler(buf, child_node->name, NULL, 0) == 1){
-				free(child_node);
-				free(root_node);
-				free(read_node);
+			stat_buf = (struct stat *)malloc(sizeof(struct stat));
+			stat_buf-> st_ino = child_node-> ino;
+			stat_buf-> st_mode = child_node-> mode;
+			if(filler(buf, child_node->name, stat_buf, 0) == 1){
+		//		free(child_node);
+    				log_msg("ERROR\n");
+		//		free(root_node);
+		//		free(read_node);
 				return -ENOMEM;
 			}else{
 				child_block = child_node->sibling;
@@ -709,11 +741,12 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 				}
 				
 			}
+			
 		}
 	}
-	free(child_node);
-	free(root_node);
-	free(read_node);
+	//free(child_node);
+	//free(root_node);
+	//free(read_node);
 	return retstat;
 }
 
