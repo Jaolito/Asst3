@@ -422,6 +422,7 @@ int sfs_unlink(const char *path){
 		block_read(rem_node->sibling, lb_node);
 		parent_node-> first_child = rem_node-> sibling;
 		lb_node-> big_brother = -1;
+log_msg("In test case\n");
 		block_write(parent_node-> i_node_num, parent_node);
 		block_write(lb_node-> i_node_num, lb_node);
 	}else if(parent_node-> last_child == i_node_index && rem_node-> big_brother != -1){
@@ -575,9 +576,9 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 	memcpy(buf, &new_buf[offset], dif);
 
 
-	free(open_node);
-	free(root_node);
-	free(new_path);
+//	free(open_node);
+//	free(root_node);
+//	free(new_path);
 	
 
     	return dif;
@@ -627,9 +628,9 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset, stru
 
 
 	block_write(open_node->data_block, new_buf);
-	free(open_node);
-	free(root_node);
-	free(new_path);
+//	free(open_node);
+//	free(root_node);
+//	free(new_path);
 	
 
     	return dif;
