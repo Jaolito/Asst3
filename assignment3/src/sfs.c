@@ -109,8 +109,15 @@ int find_i_node(struct i_node * curr ,char * path, char type){
 		while(1){
 			block_read(block_num, buf);
 			if(strncmp(temp,buf->name, strlen(buf->name))== 0){
-				break;	
-			}else{
+				if(strlen(temp)>strlen(buf->name)) {
+						if(temp[strlen(buf->name)] == '/'){
+							break;
+						}
+				}else{
+					break;
+				}	
+			
+			}
 				block_num = buf->sibling;	
 				if(block_num == -1){
 					if (type == 0 && str == NULL){
@@ -120,7 +127,7 @@ int find_i_node(struct i_node * curr ,char * path, char type){
 		errno = ENOENT;
 					return -1;
 				}
-			}
+			
 		}
 	}else{
 		if (type == 0 && str == NULL && curr->type != 0){
@@ -139,7 +146,7 @@ int find_i_node(struct i_node * curr ,char * path, char type){
 		return block_num;
 	}else{
 		int rtn = find_i_node(buf, str, type);
-		free(buf);
+	//	free(buf);
 		return rtn;
 	}
 		
@@ -485,6 +492,7 @@ int sfs_open(const char *path, struct fuse_file_info *fi){
 	strcpy(new_path, path);
 	block_read(1,root_node);
 	const int index = find_i_node(root_node, new_path, 1);
+	log_msg("open index: %d\n", index);
 	if (index != -1){
 		block_read(index, open_node);
 	}else{
@@ -666,6 +674,92 @@ int sfs_mkdir(const char *path, mode_t mode)
     log_msg("\nsfs_mkdir(path=\"%s\", mode=0%3o)\n",
 	    path, mode);
    
+   	char * new_path = (char *)malloc(sizeof(strlen(path)+1));
+    	struct i_node * root_node = (struct i_node *)malloc(512);
+	struct i_node * dir_node = (struct i_node *)malloc(512);
+	struct i_node * child_node = (struct i_node *)malloc(512);
+	struct i_node * new_node = (struct i_node *)malloc(512);
+	struct r_node * root = (struct r_node *)malloc(512);
+
+	block_read(0, root);
+
+	char * name;
+	strcpy(new_path, path);
+	name = strrchr(new_path, '/');
+	name++;
+	if (name[strlen(name) -1] == '/'){
+		name[strlen(name) -1] = '\0';	
+	}
+
+
+	block_read(1, root_node);
+	int dir_block_num = find_i_node(root_node, new_path, 0);
+	if (dir_block_num != -1){
+		block_read(dir_block_num, dir_node);
+		int open_index1;
+		open_index1 = find_free_i_node(0);
+		if (open_index1 == -1){
+			//There are not two open i_node blocks
+	//		free(root_node);
+	//		free(dir_node);
+	//		free(new_path);
+	//		free(child_node);
+	//		free(new_node);
+			return -1;
+		}
+
+		if (dir_node-> last_child != -1){
+			block_read(dir_node-> last_child, child_node);
+			child_node-> sibling = open_index1;
+			new_node-> big_brother = child_node->i_node_num; 
+			dir_node-> last_child = open_index1;
+			block_write(child_node-> i_node_num, child_node);
+		}else{
+			dir_node-> first_child = open_index1;
+			dir_node-> last_child = open_index1;
+			new_node-> big_brother = -1;
+		}
+
+		root-> counter++;
+		new_node-> ino = root-> counter;
+		new_node-> parent = dir_node->i_node_num;
+		new_node-> data_block = -1;
+		new_node-> i_node_num = open_index1;
+		new_node-> sibling = -1;
+		new_node-> child = -1;
+		new_node-> access = time(NULL);
+		new_node-> modify = new_node-> access;
+		new_node-> change = new_node-> access;
+		new_node-> first_child = -1;
+		new_node-> last_child = -1;
+		new_node-> type = 1;
+		new_node-> is_open = 0;
+		new_node-> mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO;
+		strcpy(new_node-> name, name);
+		//fi-> fh = open_index1;
+
+		block_write(dir_block_num, dir_node);
+		block_write(open_index1, new_node);
+
+	}else{
+	//	free(root_node);
+	//	free(dir_node);
+	//	free(child_node);
+	//	free(new_node);
+	//	free(new_path);
+		return -1;
+	}
+		
+	
+	
+    
+	//free(root_node);
+	//free(new_path);
+	//free(dir_node);
+	//free(child_node);
+	//free(new_node);
+    
+
     
     return retstat;
 }
@@ -677,7 +771,68 @@ int sfs_rmdir(const char *path)
     int retstat = 0;
     log_msg("sfs_rmdir(path=\"%s\")\n",
 	    path);
-    
+	struct i_node * rem_node = (struct i_node *)malloc(512);
+	struct i_node * root_node = (struct i_node *)malloc(512);
+	struct i_node * parent_node = (struct i_node *)malloc(512);
+	struct i_node * bb_node = (struct i_node *)malloc(512);
+	struct i_node * lb_node = (struct i_node *)malloc(512);
+	struct r_node * root = (struct r_node *)malloc(512);
+	char * new_path = (char *)malloc(strlen(path)+1);
+	strcpy(new_path, path);	
+
+	block_read(1, root_node);
+	int i_node_index = find_i_node(root_node, new_path,1);
+	block_read(0, root);
+	block_read(i_node_index, rem_node);
+	block_read(rem_node->parent, parent_node);	
+	if (rem_node-> first_child != -1){
+		errno = ENOTEMPTY;
+		return -1;
+	}
+	root->free_blocks[i_node_index] = 0;
+	rem_node->data_block = -1;
+	
+
+	//Shuffle parent and siblings links
+	if(rem_node-> big_brother != -1 && rem_node-> sibling != -1){
+		block_read(rem_node-> big_brother, bb_node);	
+		block_read(rem_node-> sibling, lb_node);
+		bb_node-> sibling = rem_node-> sibling;
+		lb_node-> big_brother = rem_node-> big_brother;
+		block_write(bb_node-> i_node_num, bb_node);
+		block_write(lb_node-> i_node_num, lb_node);
+	}else if(parent_node-> first_child == i_node_index && rem_node-> sibling != -1){
+		block_read(rem_node->sibling, lb_node);
+		parent_node-> first_child = rem_node-> sibling;
+		lb_node-> big_brother = -1;
+log_msg("In test case\n");
+		block_write(parent_node-> i_node_num, parent_node);
+		block_write(lb_node-> i_node_num, lb_node);
+	}else if(parent_node-> last_child == i_node_index && rem_node-> big_brother != -1){
+		block_read(rem_node->big_brother, bb_node);
+		parent_node-> last_child = bb_node-> i_node_num;
+		bb_node-> sibling = -1;
+		block_write(parent_node-> i_node_num, parent_node);
+		block_write(bb_node-> i_node_num, bb_node);
+	}else if(rem_node-> sibling == -1 && rem_node-> big_brother == -1){
+		parent_node-> last_child = -1;
+		parent_node-> first_child = -1;
+		block_write(rem_node-> parent, parent_node);
+	}else{
+		//we are beat
+	}
+
+
+
+	block_write(i_node_index, rem_node);
+	block_write(0, root);
+	//free(rem_node);
+	//free(bb_node);
+	//free(lb_node);
+	//free(root);
+	//free(parent_node);
+	//free(root_node);
+	//free(new_path);
     
     return retstat;
 }

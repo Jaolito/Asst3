@@ -1,0 +1,60 @@
+
+sfs_init()
+    conn:
+    proto_major = 7
+    proto_minor = 22
+    async_read = 0
+    max_write = 512
+    max_readahead = 131072
+    capable = 00000ffb
+    want = 00000010
+    context:
+    fuse = 010d44d0
+    uid = 0
+    gid = 0
+    pid = 0
+    private_data = 010d4010
+    logfile = 010d4040
+    diskfile = /tmp/apm145/drivefile
+    umask = 00000
+
+sfs_getattr(path="/tijhkh", statbuf=0x11e1dc40)
+
+sfs_mkdir(path="/tijhkh", mode=0700)
+
+sfs_getattr(path="/tijhkh", statbuf=0x1261ec40)
+
+ Block num: 2
+About to return from get attr
+
+sfs_getattr(path="/tijhkhhhj", statbuf=0x11e1dc40)
+
+sfs_mkdir(path="/tijhkhhhj", mode=0700)
+
+sfs_getattr(path="/tijhkhhhj", statbuf=0x1261ec40)
+
+ Block num: 3
+About to return from get attr
+
+sfs_getattr(path="/", statbuf=0x11e1dc10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_getattr(path="/", statbuf=0x1261ec10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_opendir(path="/", fi=0x11e1dc30)
+sfs_readdir(path="/")
+
+sfs_getattr(path="/tijhkh", statbuf=0x11e1dc40)
+
+ Block num: 2
+About to return from get attr
+
+sfs_getattr(path="/tijhkhhhj", statbuf=0x1261ec40)
+
+ Block num: 3
+About to return from get attr

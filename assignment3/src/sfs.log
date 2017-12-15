@@ -9,184 +9,223 @@ sfs_init()
     capable = 00000ffb
     want = 00000010
     context:
-    fuse = 017804d0
+    fuse = 00f9f4d0
     uid = 0
     gid = 0
     pid = 0
-    private_data = 01780010
-    logfile = 01780040
+    private_data = 00f9f010
+    logfile = 00f9f040
     diskfile = /tmp/apm145/drivefile
     umask = 00000
 
-sfs_getattr(path="/aaa.a", statbuf=0xd73f1c40)
-
-sfs_create(path="/aaa.a", mode=0100600, fi=0xd6bf0cf0)
-
-sfs_open(path"/aaa.a", fi=0xd6bf0cf0)
-
-index 3
-
-sfs_getattr(path="/aaa.a", statbuf=0xd6bf0c00)
-
- Block num: 3
-About to return from get attr
-
-sfs_release(path="/aaa.a", fi=0xd6bf0cf0)
-
-sfs_getattr(path="/", statbuf=0xd73f1c10)
+sfs_getattr(path="/", statbuf=0xaaf92c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_opendir(path="/", fi=0xd6bf0c30)
+sfs_getattr(path="/temp", statbuf=0xaa791c40)
+
+sfs_mkdir(path="/temp", mode=0700)
+
+sfs_getattr(path="/temp", statbuf=0xaaf92c40)
+
+ Block num: 2
+About to return from get attr
+
+sfs_getattr(path="/", statbuf=0xaa791c10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_getattr(path="/", statbuf=0xaaf92c10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_opendir(path="/", fi=0xaa791c30)
 sfs_readdir(path="/")
 
-sfs_getattr(path="/aaa.a", statbuf=0xd6bf0c40)
+sfs_getattr(path="/temp", statbuf=0xaa791c40)
 
- Block num: 3
+ Block num: 2
 About to return from get attr
 
-sfs_getattr(path="/", statbuf=0xd6bf0c10)
+sfs_getattr(path="/", statbuf=0xaaf92c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_opendir(path="/", fi=0xd73f1c30)
+sfs_opendir(path="/", fi=0xaa791c30)
 sfs_readdir(path="/")
 
-sfs_getattr(path="/aaa.a", statbuf=0xd73f1c40)
-
- Block num: 3
-About to return from get attr
-
-sfs_getattr(path="/", statbuf=0xd6bf0c10)
+sfs_getattr(path="/", statbuf=0xaa791c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_opendir(path="/", fi=0xd73f1c30)
+sfs_getattr(path="/temp", statbuf=0xaaf92c40)
+
+ Block num: 2
+About to return from get attr
+
+sfs_opendir(path="/temp", fi=0xaa791c30)
+sfs_readdir(path="/temp")
+
+sfs_getattr(path="/temp", statbuf=0xaaf92c10)
+
+ Block num: 2
+About to return from get attr
+
+sfs_opendir(path="/temp", fi=0xaa791c30)
+sfs_readdir(path="/temp")
+
+sfs_getattr(path="/temp", statbuf=0xaaf92c40)
+
+ Block num: 2
+About to return from get attr
+
+sfs_getattr(path="/temp/file", statbuf=0xaa791c40)
+
+sfs_create(path="/temp/file", mode=0100600, fi=0xaaf92cf0)
+
+sfs_open(path"/temp/file", fi=0xaaf92cf0)
+open index: 4
+
+index 4
+
+sfs_getattr(path="/temp/file", statbuf=0xaaf92c00)
+
+ Block num: 4
+About to return from get attr
+
+sfs_release(path="/temp/file", fi=0xaaf92cf0)
+
+sfs_getattr(path="/", statbuf=0xaa791c10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_getattr(path="/", statbuf=0xaaf92c10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_opendir(path="/", fi=0xaa791c30)
 sfs_readdir(path="/")
 
-sfs_getattr(path="/aaa.a", statbuf=0xd73f1c40)
+sfs_getattr(path="/temp", statbuf=0xaa791c40)
 
- Block num: 3
+ Block num: 2
 About to return from get attr
 
-sfs_getattr(path="/", statbuf=0xd6bf0c10)
+sfs_getattr(path="/", statbuf=0xaaf92c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_opendir(path="/", fi=0xd73f1c30)
+sfs_opendir(path="/", fi=0xaa791c30)
 sfs_readdir(path="/")
 
-sfs_getattr(path="/", statbuf=0xd73f1c10)
+sfs_opendir(path="/temp", fi=0xaa791c30)
+sfs_readdir(path="/temp")
+
+sfs_getattr(path="/temp/file", statbuf=0xaa791c40)
+
+ Block num: 4
+About to return from get attr
+
+sfs_getattr(path="/", statbuf=0xaa791c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_opendir(path="/", fi=0xd6bf0c30)
+sfs_getattr(path="/", statbuf=0xaaf92c10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_opendir(path="/", fi=0xaa791c30)
 sfs_readdir(path="/")
 
-sfs_getattr(path="/aaa.a", statbuf=0xd6bf0c40)
+sfs_getattr(path="/temp", statbuf=0xaa791c40)
 
- Block num: 3
+ Block num: 2
 About to return from get attr
 
-sfs_getattr(path="/", statbuf=0xd73f1c10)
+sfs_getattr(path="/temp", statbuf=0xaaf92c40)
+
+ Block num: 2
+About to return from get attr
+sfs_rmdir(path="/temp")
+
+sfs_getattr(path="/", statbuf=0xaaf92c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_opendir(path="/", fi=0xd6bf0c30)
+sfs_getattr(path="/", statbuf=0xaa791c10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_opendir(path="/", fi=0xaaf92c30)
 sfs_readdir(path="/")
 
-sfs_getattr(path="/", statbuf=0xd6bf0c10)
+sfs_getattr(path="/temp", statbuf=0xaa791c40)
+
+ Block num: 2
+About to return from get attr
+
+sfs_getattr(path="/", statbuf=0xaaf92c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_opendir(path="/", fi=0xd73f1c30)
+sfs_opendir(path="/", fi=0xaa791c30)
 sfs_readdir(path="/")
 
-sfs_getattr(path="/aaa.a", statbuf=0xd73f1c40)
-
- Block num: 3
-About to return from get attr
-
-sfs_getattr(path="/", statbuf=0xd6bf0c10)
+sfs_getattr(path="/", statbuf=0xaa791c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_getattr(path="/bbb.b", statbuf=0xd73f1c40)
+sfs_opendir(path="/temp", fi=0xaaf92c30)
+sfs_readdir(path="/temp")
 
-sfs_create(path="/bbb.b", mode=0100600, fi=0xd6bf0cf0)
+sfs_getattr(path="/temp/file", statbuf=0xaaf92c40)
 
-sfs_open(path"/bbb.b", fi=0xd6bf0cf0)
-
-index 5
-
-sfs_getattr(path="/bbb.b", statbuf=0xd6bf0c00)
-
- Block num: 5
+ Block num: 4
 About to return from get attr
 
-sfs_release(path="/bbb.b", fi=0xd73f1cf0)
+sfs_getattr(path="/temp", statbuf=0xaa791c10)
 
-sfs_getattr(path="/", statbuf=0xd6bf0c10)
+ Block num: 2
+About to return from get attr
+
+sfs_opendir(path="/temp", fi=0xaaf92c30)
+sfs_readdir(path="/temp")
+
+sfs_getattr(path="/temp", statbuf=0xaaf92c40)
+
+ Block num: 2
+About to return from get attr
+sfs_unlink(path="/temp/file")
+
+sfs_getattr(path="/temp", statbuf=0xaaf92c40)
+
+ Block num: 2
+About to return from get attr
+sfs_rmdir(path="/temp")
+
+sfs_getattr(path="/", statbuf=0xaa791c10)
 
  Block num: 1
 About to return from get attr
 
-sfs_opendir(path="/", fi=0xd73f1c30)
+sfs_getattr(path="/", statbuf=0xaaf92c10)
+
+ Block num: 1
+About to return from get attr
+
+sfs_opendir(path="/", fi=0xaa791c30)
 sfs_readdir(path="/")
-
-sfs_getattr(path="/aaa.a", statbuf=0xd73f1c40)
-
- Block num: 3
-About to return from get attr
-
-sfs_getattr(path="/bbb.b", statbuf=0xd6bf0c40)
-
- Block num: 5
-About to return from get attr
-
-sfs_getattr(path="/", statbuf=0xd73f1c10)
-
- Block num: 1
-About to return from get attr
-
-sfs_opendir(path="/", fi=0xd6bf0c30)
-sfs_readdir(path="/")
-
-sfs_getattr(path="/aaa.a", statbuf=0xd6bf0c40)
-
- Block num: 3
-About to return from get attr
-
-sfs_getattr(path="/bbb.b", statbuf=0xd73f1c40)
-
- Block num: 5
-About to return from get attr
-
-sfs_getattr(path="/", statbuf=0xd6bf0c10)
-
- Block num: 1
-About to return from get attr
-
-sfs_opendir(path="/", fi=0xd73f1c30)
-sfs_readdir(path="/")
-
-sfs_getattr(path="/", statbuf=0xd73f1c10)
-
- Block num: 1
-About to return from get attr
-
-sfs_opendir(path="/", fi=0xd6bf0c30)
-sfs_readdir(path="/")
-
-sfs_getattr(path="/aaa.a", statbuf=0xd6bf0c40)
-
- Block num: 3
-About to return from get attr
