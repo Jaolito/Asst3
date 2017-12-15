@@ -9,11 +9,11 @@
 
 
 ## Testing
-
+This program works for all required functionality. touch, echo, cat, rm, cd, and ls.
 
 ## Design
-For this project we have chosen to implement the extended directory operations for the functions
-int mkdir(char* path)
+For this project we have chosen to implement the extended directory operations for the functions <br>
+int mkdir(char* path) <br>
 int rmdir(char* path)
 
 Our design features a root node which keeps track of the current state of the system, such as remembering which blocks are free and which are used.
