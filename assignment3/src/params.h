@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <time.h>
+	
 struct sfs_state {
     FILE *logfile;
     char *diskfile;
@@ -46,6 +48,7 @@ struct i_node {
 	mode_t mode;
 	uint32_t ino;
 	int first_child;
+	time_t access, modify, change;
 	int last_child;
 	int big_brother;
 	int parent;
