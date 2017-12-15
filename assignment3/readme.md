@@ -9,7 +9,7 @@
 
 
 ## Testing
-This program works for all required functionality. touch, echo, cat, rm, cd, and ls.
+This program works for all required functionality. touch, echo, cat, rm, cd, and ls. A problem we faced is that ls has random behavior when run on a directory with more than 2 members. We could not pinpoint the issue, but ls works perfectly fine with 1 or 2 members. However, more members will be read with incorrect mode values that we did not assign. The structure of the file system remains intact and ls will output all the files, but it disconnects and breaks the mounted directory. 
 
 ## Design
 For this project we have chosen to implement the extended directory operations for the functions <br>
